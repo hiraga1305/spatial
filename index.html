@@ -11,7 +11,7 @@
     <script src="https://unpkg.com/shpjs@3.6.2/dist/shp.js"></script>
     
     <style>
-/* --- CSS ĐÃ ĐƯỢC CHỈNH SỬA CHO SIDEBAR BÊN PHẢI --- */
+/* CSS Layout (Sidebar bên phải, ẩn/hiện) */
 html, body {
     height: 100vh; 
     margin: 0;
@@ -19,34 +19,24 @@ html, body {
     font-family: Arial, sans-serif;
     overflow: hidden; 
 }
-
-/* MỚI: Sidebar (BÊN PHẢI) */
 #sidebar {
     position: absolute; 
-    right: 0; /* MỚI: Chuyển sang phải */
+    right: 0;
     top: 0;
     width: 350px; 
     height: 100vh; 
     background: #ffffff;
-    /* MỚI: Xóa padding để bảng tràn viền */
     padding: 0;
     box-sizing: border-box; 
     overflow-y: auto; 
-    /* MỚI: Đổi bóng đổ */
     box-shadow: -2px 0 5px rgba(0,0,0,0.1); 
     z-index: 1000; 
-
-    /* MỚI: Mặc định ẩn (trượt 100% ra bên PHẢI) */
     transform: translateX(100%);
     transition: transform 0.3s ease-in-out;
 }
-
-/* MỚI: Lớp CSS để hiện sidebar */
 #sidebar.sidebar-visible {
     transform: translateX(0);
 }
-
-/* Map: Full màn hình (nằm dưới) */
 #map {
     position: absolute; 
     left: 0;
@@ -56,7 +46,7 @@ html, body {
     z-index: 1; 
 }
 
-/* --- MỚI: CSS CHO BẢNG GIỐNG HÌNH --- */
+/* CSS Bảng thông tin (giống hình) */
 #sidebar h2 {
     margin: 0;
     padding: 15px;
@@ -64,45 +54,32 @@ html, body {
     border-bottom: 1px solid #ddd;
     font-size: 18px;
 }
-
 #sidebar-content {
-    /* MỚI: Thêm padding cho nội dung */
     padding: 15px;
 }
-
 #sidebar-content table {
     width: 100%;
     border-collapse: collapse;
 }
-
-/* MỚI: CSS cho Header (Tên cột, Giá trị) */
 #sidebar-content thead tr {
-    background-color: #f2f2f2; /* Màu xám nhạt như hình */
+    background-color: #f2f2f2; 
     border-bottom: 1px solid #ddd;
 }
 #sidebar-content thead th {
     padding: 10px 8px;
     text-align: left;
-    font-weight: bold; /* Chữ đậm */
+    font-weight: bold; 
 }
-
-/* CSS cho các dòng dữ liệu */
 #sidebar-content tbody td {
     border-bottom: 1px solid #ddd;
     padding: 8px 8px;
     text-align: left;
     word-break: break-all; 
-    /* MỚI: Thêm hiệu ứng chuyển động */
     transition: background-color 0.2s;
 }
-
-/* Cột đầu tiên (Tên thuộc tính) */
 #sidebar-content tbody td:first-child {
-    /* Cột key không in đậm, giống hình */
-    width: 120px; /* Cố định chiều rộng cột 1 */
+    width: 120px; 
 }
-
-/* MỚI: Hiệu ứng hover MÀU XANH LÁ (trên TỪNG Ô) */
 #sidebar-content tbody td:hover {
     background-color: #e6f7e6; /* Màu xanh lá nhạt */
     cursor: pointer;
@@ -124,23 +101,39 @@ html, body {
 // 1. Khởi tạo bản đồ Leaflet
 const map = L.map('map').setView([10.7769, 106.7009], 10); 
 
-// 2. Định nghĩa các lớp bản đồ nền
-const osm = L.tileLayer.provider('OpenStreetMap.Mapnik').addTo(map); 
-const esriSatellite = L.tileLayer.provider('Esri.WorldImagery');
+// --- ĐÃ SỬA LỖI ---
+
+// 2. ĐỊNH NGHĨA CÁC LỚP BẢN ĐỒ NỀN (Base Maps)
+const osm = L.tileLayer.provider('OpenStreetMap.Mapnik');
+const esriSatellite = L.tileLayer.provider('Esri.WorldImagery').addTo(map); // Mặc định là Vệ tinh
+
 const baseMaps = {
     "OpenStreetMap": osm,
-    "Esri Vệ tinh (Earth)": esriSatellite
+    "Vệ tinh (Esri)": esriSatellite 
 };
-L.control.layers(baseMaps).addTo(map);
 
-// 3. Lấy phần tử sidebar
+// 3. ĐỊNH NGHĨA CÁC LỚP PHỦ (Overlay Maps)
+// MỚI: Dùng lớp 'CartoDB.PositronOnlyLabels' thay thế cho lớp Esri bị hỏng
+const cartoLabels = L.tileLayer.provider('CartoDB.PositronOnlyLabels').addTo(map); 
+
+const overlayMaps = {
+    "Chỉ dẫn (Đường & Địa danh)": cartoLabels // MỚI: Cập nhật biến
+};
+
+// 4. THÊM BỘ CHỌN LỚP (Base + Overlay)
+L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+// --- HẾT PHẦN SỬA LỖI ---
+
+
+// 5. Lấy phần tử sidebar
 const sidebar = document.getElementById('sidebar');
 const sidebarContent = document.getElementById('sidebar-content'); 
 
-// 4. Biến để lưu trữ layer đang được chọn
+// 6. Biến để lưu trữ layer đang được chọn
 let lastClickedLayer = null;
 
-// 5. Định nghĩa style (không đổi)
+// 7. Định nghĩa style (không đổi)
 const defaultStyle = {
     color: "#ff7800", weight: 2, opacity: 0.8, fillColor: "#ff7800", fillOpacity: 0.3
 };
@@ -148,7 +141,7 @@ const highlightStyle = {
     color: "#00FFFF", weight: 4, opacity: 1, fillColor: "#00FFFF", fillOpacity: 0.5   
 };
 
-// 6. Sự kiện khi click vào bản đồ (để clear VÀ ẨN sidebar)
+// 8. Sự kiện khi click vào bản đồ (để clear VÀ ẨN sidebar)
 map.on('click', function() {
     if (lastClickedLayer) {
         lastClickedLayer.setStyle(defaultStyle); 
@@ -158,10 +151,11 @@ map.on('click', function() {
     sidebar.classList.remove('sidebar-visible'); // Ẩn sidebar
 });
 
-// 7. Đường dẫn đến file Shapefile .zip
+// 9. Đường dẫn đến file Shapefile .zip
 const shpZipPath = 'data/VungLuaCLC_3857.zip'; // Đảm bảo tên file này chính xác!
 
-// 8. Đọc và vẽ Shapefile
+// 10. Đọc và vẽ Shapefile
+// (Code này bây giờ sẽ chạy được)
 fetch(shpZipPath)
     .then(response => response.arrayBuffer()) 
     .then(buffer => shp.parseZip(buffer)) 
@@ -177,20 +171,15 @@ fetch(shpZipPath)
                     
                     L.DomEvent.stopPropagation(e);
 
-                    // Highlight
                     if (lastClickedLayer) {
                         lastClickedLayer.setStyle(defaultStyle);
                     }
                     layer.setStyle(highlightStyle);
                     lastClickedLayer = layer;
 
-                    // Lấy dữ liệu
                     const props = feature.properties;
                     
-                    // --- MỚI: TẠO BẢNG CÓ HEADER ---
                     let tableContent = '<table>';
-                    
-                    // Thêm phần header (Tên cột, Giá trị)
                     tableContent += `
                         <thead>
                             <tr>
@@ -199,23 +188,16 @@ fetch(shpZipPath)
                             </tr>
                         </thead>
                     `;
-                    
-                    // Thêm phần thân bảng (tbody)
                     tableContent += '<tbody>';
                     for (let key in props) {
-                        // Cả 2 đều là <td> (ô dữ liệu)
                         tableContent += `<tr>
                                             <td>${key}</td>
                                             <td>${props[key]}</td>
                                          </tr>`;
                     }
                     tableContent += '</tbody></table>';
-                    // --- HẾT PHẦN TẠO BẢNG ---
                     
-                    // Đưa HTML vào sidebar
                     sidebarContent.innerHTML = tableContent;
-                    
-                    // HIỆN sidebar lên
                     sidebar.classList.add('sidebar-visible');
                 });
             }
