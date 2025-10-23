@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lúa CLC Đồng Tháp</title>
+    <title>WebGIS - Hoàn Thiện</title>
     
-    <!-- Font Roboto từ Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Font Awesome cho icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -18,8 +16,10 @@
     <script src="https://unpkg.com/leaflet-providers@1.13.0/leaflet-providers.js"></script>
     <script src="https://unpkg.com/shpjs@3.6.2/dist/shp.js"></script>
     
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    
     <style>
-/* Reset và Layout cơ bản */
 * {
     margin: 0;
     padding: 0;
@@ -41,29 +41,208 @@ html, body {
     z-index: 1;
 }
 
-/* ===== GIẢM KÍCH THƯỚC ZOOM BUTTONS ===== */
-.leaflet-control-zoom {
-    margin-left: 10px !important;
-    margin-top: 10px !important;
+/* ===== TOP CONTROLS - NGANG ===== */
+.top-controls {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    z-index: 1000;
+    display: flex;
+    gap: 5px;
 }
 
-.leaflet-control-zoom a {
-    width: 26px !important;
-    height: 26px !important;
-    line-height: 26px !important;
-    font-size: 16px !important;
+/* ===== CUSTOM ZOOM CONTROL - NGANG ===== */
+.custom-zoom-control {
+    display: flex;
+    gap: 5px;
 }
 
-/* ===== TÁCH LAYER CONTROL RA KHỎI ZOOM ===== */
-.leaflet-top.leaflet-right {
-    left: 10px !important;
-    right: auto !important;
-    top: 50px !important; /* Đẩy xuống dưới zoom buttons */
+.zoom-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #333;
+    transition: background 0.2s;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+    border-radius: 4px;
+}
+
+.zoom-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+/* ===== SEARCH BOX - BÊNPHẢI ZOOM ===== */
+.search-control {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+    width: 30px;
+    height: 30px;
+    transition: width 0.3s;
+    overflow: hidden;
+    display: flex;
+}
+
+.search-control.active {
+    width: 250px;
+}
+
+.search-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    flex-shrink: 0;
+}
+
+.search-input {
+    border: none;
+    background: transparent;
+    flex: 1;
+    height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+    font-family: 'Roboto', Arial, sans-serif;
+    outline: none;
+}
+
+/* ===== CUSTOM LAYER CONTROL - BÊN PHẢI SEARCH ===== */
+.custom-layer-control {
+    width: 30px;
+    height: 30px;
+}
+
+.custom-layer-control button {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    transition: background 0.2s;
+}
+
+.custom-layer-control button:hover {
+    background: rgba(255, 255, 255, 0.95);
 }
 
 .leaflet-control-layers {
-    font-family: 'Roboto', Arial, sans-serif !important;
-    font-size: 13px !important;
+    display: none !important;
+}
+
+.layer-menu {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 35px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    padding: 10px;
+    min-width: 180px;
+    z-index: 1001;
+}
+
+.layer-menu.active {
+    display: block;
+}
+
+.layer-menu label {
+    display: block;
+    padding: 5px 0;
+    font-size: 12px;
+    cursor: pointer;
+    color: #333;
+}
+
+.layer-menu input {
+    margin-right: 5px;
+}
+
+.layer-section {
+    margin-bottom: 10px;
+}
+
+.layer-section-title {
+    font-weight: 600;
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #ddd;
+}
+
+/* ===== CUSTOM TOOLS ===== */
+.custom-tools {
+    position: absolute;
+    left: 10px;
+    bottom: 60px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.tool-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #333;
+    transition: all 0.2s;
+}
+
+.tool-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: scale(1.05);
+}
+
+.tool-btn.active {
+    background: rgba(46, 204, 113, 0.9);
+    color: white;
+}
+
+.tool-btn.clear {
+    background: rgba(231, 76, 60, 0.7);
+    color: white;
+}
+
+.tool-btn.clear:hover {
+    background: rgba(231, 76, 60, 0.9);
+}
+
+/* ===== SCALE BAR ===== */
+.leaflet-control-scale {
+    background: rgba(255, 255, 255, 0.7) !important;
+    font-size: 11px !important;
+    line-height: 1.5 !important;
+    padding: 2px 5px !important;
+    border-radius: 3px !important;
+}
+
+.leaflet-control-scale-line {
+    border: 2px solid #333 !important;
+    border-top: none !important;
+    color: #333 !important;
+    font-weight: 600 !important;
 }
 
 /* ===== SIDEBAR ===== */
@@ -86,7 +265,6 @@ html, body {
     transform: translateX(0);
 }
 
-/* Header sidebar */
 .sidebar-header {
     background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
     color: white;
@@ -94,16 +272,12 @@ html, body {
     font-size: 15px;
     font-weight: 600;
     border-bottom: 2px solid #27ae60;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
 }
 
 .sidebar-header i {
     margin-right: 8px;
 }
 
-/* Content sidebar */
 .sidebar-content {
     flex: 1;
     overflow-y: auto;
@@ -115,16 +289,11 @@ html, body {
     width: 6px;
 }
 
-.sidebar-content::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
 .sidebar-content::-webkit-scrollbar-thumb {
     background: #27ae60;
     border-radius: 3px;
 }
 
-/* Tabs trong sidebar */
 .sidebar-tabs {
     display: flex;
     border-bottom: 1px solid #e0e0e0;
@@ -155,7 +324,6 @@ html, body {
     background: white;
 }
 
-/* Bảng thông tin nhỏ gọn */
 .info-table {
     width: 100%;
     font-size: 12px;
@@ -164,10 +332,6 @@ html, body {
 
 .info-table tr {
     border-bottom: 1px solid #e9ecef;
-}
-
-.info-table tr:last-child {
-    border-bottom: none;
 }
 
 .info-table td {
@@ -179,17 +343,8 @@ html, body {
     font-weight: 600;
     color: #495057;
     width: 40%;
-    overflow-wrap: break-word;
-    word-break: normal;
 }
 
-.info-table td:last-child {
-    color: #212529;
-    overflow-wrap: break-word;
-    word-break: normal;
-}
-
-/* Message khi chưa chọn */
 .info-message {
     text-align: center;
     padding: 30px 20px;
@@ -204,14 +359,14 @@ html, body {
     display: block;
 }
 
-/* ===== NÚT TOGGLE TỐI GIẢN ===== */
+/* ===== TOGGLE BUTTON ===== */
 #sidebar-toggle {
     position: fixed;
     right: 0;
     top: 50%;
     transform: translateY(-50%);
     z-index: 1999;
-    background: #2ecc71;
+    background: rgba(46, 204, 113, 0.7);
     color: white;
     border: none;
     width: 30px;
@@ -223,13 +378,11 @@ html, body {
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
-    padding: 0;
 }
 
 #sidebar-toggle:hover {
-    background: #27ae60;
+    background: rgba(39, 174, 96, 0.85);
     width: 35px;
-    box-shadow: -5px 0 12px rgba(0, 0, 0, 0.2);
 }
 
 #sidebar-toggle i {
@@ -245,20 +398,90 @@ html, body {
     transform: rotate(180deg);
 }
 
-/* ===== NHÃN XÃ - GIỐNG HÌNH MẪU: ĐEN VỚI VIỀN TRẮNG ===== */
+/* ===== NHÃN XÃ ===== */
 .leaflet-tooltip.xa-label {
     background: none !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
-    transition: font-size 0.2s ease-in-out !important;
 }
     </style>
 </head>
 <body>
 
-    <!-- Bản đồ -->
     <div id="map"></div>
+
+    <!-- Top Controls - NGANG -->
+    <div class="top-controls">
+        <!-- Zoom Control -->
+        <div class="custom-zoom-control">
+            <button class="zoom-btn" id="zoom-in" title="Phóng to">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button class="zoom-btn" id="zoom-out" title="Thu nhỏ">
+                <i class="fas fa-minus"></i>
+            </button>
+        </div>
+
+        <!-- Search Control -->
+        <div class="search-control" id="search-control">
+            <button class="search-btn" id="search-btn">
+                <i class="fas fa-search"></i>
+            </button>
+            <input type="text" class="search-input" id="search-input" placeholder="Tìm kiếm...">
+        </div>
+
+        <!-- Layer Control -->
+        <div class="custom-layer-control">
+            <button id="layer-btn" title="Quản lý lớp">
+                <i class="fas fa-layer-group"></i>
+            </button>
+            <div class="layer-menu" id="layer-menu">
+                <div class="layer-section">
+                    <div class="layer-section-title">BẢN ĐỒ NỀN</div>
+                    <label>
+                        <input type="radio" name="basemap" value="satellite" checked>
+                        Vệ tinh (Esri)
+                    </label>
+                    <label>
+                        <input type="radio" name="basemap" value="osm">
+                        OpenStreetMap
+                    </label>
+                </div>
+                <div class="layer-section">
+                    <div class="layer-section-title">LỚP PHỦ</div>
+                    <label>
+                        <input type="checkbox" id="layer-carto">
+                        Chỉ dẫn
+                    </label>
+                    <label>
+                        <input type="checkbox" id="layer-vunglua" checked>
+                        Vùng Lúa
+                    </label>
+                    <label>
+                        <input type="checkbox" id="layer-ranhxa" checked>
+                        Ranh Xã
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Tools -->
+    <div class="custom-tools">
+        <button class="tool-btn" id="measure-distance" title="Đo khoảng cách">
+            <i class="fas fa-ruler"></i>
+        </button>
+        <button class="tool-btn" id="measure-area" title="Đo diện tích">
+            <i class="fas fa-draw-polygon"></i>
+        </button>
+        <button class="tool-btn" id="my-location" title="Vị trí của tôi">
+            <i class="fas fa-location-dot"></i>
+        </button>
+        <button class="tool-btn clear" id="clear-measures" title="Xóa các đo đạc">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
 
     <!-- Sidebar -->
     <div id="sidebar">
@@ -286,35 +509,207 @@ html, body {
         </div>
     </div>
 
-    <!-- Nút Toggle -->
     <button id="sidebar-toggle" onclick="toggleSidebar()" title="Mở/Đóng thông tin">
         <i class="fas fa-chevron-left"></i>
     </button>
 
     <script>
 // ===== KHỞI TẠO BẢN ĐỒ =====
-const map = L.map('map').setView([10.7769, 106.7009], 10);
+const map = L.map('map', {
+    zoomControl: false
+}).setView([10.7769, 106.7009], 10);
 
-// Lớp bản đồ nền
 const osm = L.tileLayer.provider('OpenStreetMap.Mapnik');
 const esriSatellite = L.tileLayer.provider('Esri.WorldImagery').addTo(map);
-const baseMaps = {
-    "OpenStreetMap": osm,
-    "Vệ tinh (Esri)": esriSatellite
-};
-
-// Lớp phủ
 const cartoLabels = L.tileLayer.provider('CartoDB.PositronOnlyLabels');
-const overlayMaps = {
-    "Chỉ dẫn (Đường & Địa danh)": cartoLabels
-};
 
-// Bộ chọn lớp
-const layerControl = L.control.layers(baseMaps, overlayMaps, {
-    position: 'topright'
+L.control.scale({
+    position: 'bottomleft',
+    metric: true,
+    imperial: false,
+    maxWidth: 100
 }).addTo(map);
 
-// ===== XỬ LÝ SIDEBAR =====
+// ===== CUSTOM ZOOM CONTROL =====
+document.getElementById('zoom-in').addEventListener('click', () => {
+    map.zoomIn();
+});
+
+document.getElementById('zoom-out').addEventListener('click', () => {
+    map.zoomOut();
+});
+
+// ===== SEARCH CONTROL =====
+const searchControl = document.getElementById('search-control');
+const searchBtn = document.getElementById('search-btn');
+const searchInput = document.getElementById('search-input');
+
+searchBtn.addEventListener('click', () => {
+    searchControl.classList.toggle('active');
+    if (searchControl.classList.contains('active')) {
+        searchInput.focus();
+    }
+});
+
+searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        alert('Tìm kiếm: ' + searchInput.value);
+    }
+});
+
+// ===== CUSTOM LAYER CONTROL =====
+const layerBtn = document.getElementById('layer-btn');
+const layerMenu = document.getElementById('layer-menu');
+
+layerBtn.addEventListener('click', () => {
+    layerMenu.classList.toggle('active');
+});
+
+document.addEventListener('click', (e) => {
+    if (!layerBtn.contains(e.target) && !layerMenu.contains(e.target)) {
+        layerMenu.classList.remove('active');
+    }
+});
+
+document.querySelectorAll('input[name="basemap"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        if (e.target.value === 'satellite') {
+            map.removeLayer(osm);
+            map.addLayer(esriSatellite);
+        } else {
+            map.removeLayer(esriSatellite);
+            map.addLayer(osm);
+        }
+    });
+});
+
+document.getElementById('layer-carto').addEventListener('change', (e) => {
+    if (e.target.checked) {
+        map.addLayer(cartoLabels);
+    } else {
+        map.removeLayer(cartoLabels);
+    }
+});
+
+// ===== ĐO KHOẢNG CÁCH VÀ DIỆN TÍCH =====
+let measureMode = null;
+let drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+
+const measureDistance = document.getElementById('measure-distance');
+const measureArea = document.getElementById('measure-area');
+const clearMeasures = document.getElementById('clear-measures');
+
+measureDistance.addEventListener('click', () => {
+    if (measureMode === 'distance') {
+        stopMeasure();
+    } else {
+        startMeasure('distance');
+    }
+});
+
+measureArea.addEventListener('click', () => {
+    if (measureMode === 'area') {
+        stopMeasure();
+    } else {
+        startMeasure('area');
+    }
+});
+
+clearMeasures.addEventListener('click', () => {
+    drawnItems.clearLayers();
+    if (locationMarker) {
+        map.removeLayer(locationMarker);
+        locationMarker = null;
+    }
+    if (locationCircle) {
+        map.removeLayer(locationCircle);
+        locationCircle = null;
+    }
+});
+
+function startMeasure(mode) {
+    stopMeasure();
+    measureMode = mode;
+    
+    if (mode === 'distance') {
+        measureDistance.classList.add('active');
+        new L.Draw.Polyline(map, {
+            shapeOptions: {
+                color: '#ff0000',
+                weight: 3
+            }
+        }).enable();
+    } else if (mode === 'area') {
+        measureArea.classList.add('active');
+        new L.Draw.Polygon(map, {
+            shapeOptions: {
+                color: '#0000ff',
+                weight: 3,
+                fillOpacity: 0.3
+            }
+        }).enable();
+    }
+}
+
+function stopMeasure() {
+    measureDistance.classList.remove('active');
+    measureArea.classList.remove('active');
+    measureMode = null;
+}
+
+map.on(L.Draw.Event.CREATED, (e) => {
+    const layer = e.layer;
+    drawnItems.addLayer(layer);
+    
+    if (e.layerType === 'polyline') {
+        const distance = calculateDistance(layer.getLatLngs());
+        alert('Khoảng cách: ' + distance.toFixed(2) + ' m');
+    } else if (e.layerType === 'polygon') {
+        const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+        alert('Diện tích: ' + area.toFixed(2) + ' m²');
+    }
+    
+    stopMeasure();
+});
+
+function calculateDistance(latlngs) {
+    let distance = 0;
+    for (let i = 0; i < latlngs.length - 1; i++) {
+        distance += latlngs[i].distanceTo(latlngs[i + 1]);
+    }
+    return distance;
+}
+
+// ===== VỊ TRÍ CỦA TÔI =====
+const myLocation = document.getElementById('my-location');
+let locationMarker = null;
+let locationCircle = null;
+
+myLocation.addEventListener('click', () => {
+    map.locate({setView: true, maxZoom: 16});
+});
+
+map.on('locationfound', (e) => {
+    if (locationMarker) map.removeLayer(locationMarker);
+    if (locationCircle) map.removeLayer(locationCircle);
+    
+    locationMarker = L.marker(e.latlng, {
+        icon: L.divIcon({
+            className: 'my-location-icon',
+            html: '<i class="fas fa-circle" style="color: #2ecc71; font-size: 20px;"></i>',
+            iconSize: [20, 20]
+        })
+    }).addTo(map);
+    
+    locationCircle = L.circle(e.latlng, e.accuracy).addTo(map);
+});
+
+map.on('locationerror', (e) => {
+    alert('Không thể xác định vị trí: ' + e.message);
+});
+
+// ===== SIDEBAR =====
 const sidebar = document.getElementById('sidebar');
 const sidebarContent = document.getElementById('sidebar-content');
 let lastClickedLayer = null;
@@ -327,25 +722,12 @@ function switchTab(tabName) {
     document.querySelectorAll('.sidebar-tab').forEach(tab => {
         tab.classList.remove('active');
     });
-    
     event.target.closest('.sidebar-tab').classList.add('active');
     
-    if (tabName === 'info') {
-        // Giữ nguyên nội dung
-    } else if (tabName === 'layers') {
-        sidebarContent.innerHTML = `
-            <div class="info-message">
-                <i class="fas fa-layer-group"></i>
-                <p>Quản lý các lớp dữ liệu</p>
-            </div>
-        `;
+    if (tabName === 'layers') {
+        sidebarContent.innerHTML = '<div class="info-message"><i class="fas fa-layer-group"></i><p>Quản lý các lớp dữ liệu</p></div>';
     } else if (tabName === 'analysis') {
-        sidebarContent.innerHTML = `
-            <div class="info-message">
-                <i class="fas fa-chart-bar"></i>
-                <p>Công cụ phân tích</p>
-            </div>
-        `;
+        sidebarContent.innerHTML = '<div class="info-message"><i class="fas fa-chart-bar"></i><p>Công cụ phân tích</p></div>';
     }
 }
 
@@ -354,15 +736,9 @@ map.on('click', function() {
         lastClickedLayer.setStyle(defaultStyle);
         lastClickedLayer = null;
     }
-    sidebarContent.innerHTML = `
-        <div class="info-message">
-            <i class="fas fa-mouse-pointer"></i>
-            <p>Click vào một thửa đất trên bản đồ để xem thông tin chi tiết</p>
-        </div>
-    `;
+    sidebarContent.innerHTML = '<div class="info-message"><i class="fas fa-mouse-pointer"></i><p>Click vào một thửa đất</p></div>';
 });
 
-// ===== STYLE CHO LỚP VÙNG LÚA =====
 const defaultStyle = {
     color: "#ff7800",
     weight: 2,
@@ -379,68 +755,21 @@ const highlightStyle = {
     fillOpacity: 0.5
 };
 
-// ===== XỬ LÝ NHÃN XÃ =====
+// ===== NHÃN XÃ =====
 let labelLayers = [];
-
-function calculateAdaptiveFontSize(polygonBounds, zoom, labelText) {
-    const sw = map.latLngToContainerPoint(polygonBounds.getSouthWest());
-    const ne = map.latLngToContainerPoint(polygonBounds.getNorthEast());
-    const polygonWidth = Math.abs(ne.x - sw.x);
-    const polygonHeight = Math.abs(sw.y - ne.y);
-    
-    let baseFontSize;
-    if (zoom >= 14) baseFontSize = 18;
-    else if (zoom >= 13) baseFontSize = 16;
-    else if (zoom >= 12) baseFontSize = 14;
-    else if (zoom >= 11) baseFontSize = 12;
-    else if (zoom >= 10) baseFontSize = 10;
-    else if (zoom >= 9) baseFontSize = 9;
-    else if (zoom >= 8) baseFontSize = 8;
-    else baseFontSize = 7;
-    
-    const maxTextWidth = polygonWidth * 0.85;
-    const maxTextHeight = polygonHeight * 0.7;
-    
-    const estimatedTextWidth = labelText.length * baseFontSize * 0.6;
-    let adjustedFontSize = baseFontSize;
-    
-    if (estimatedTextWidth > maxTextWidth) {
-        adjustedFontSize = Math.floor(maxTextWidth / (labelText.length * 0.6));
-    }
-    
-    if (adjustedFontSize * 1.5 > maxTextHeight) {
-        adjustedFontSize = Math.min(adjustedFontSize, Math.floor(maxTextHeight / 1.5));
-    }
-    
-    return Math.max(6, adjustedFontSize);
-}
+const HIDE_ZOOM_THRESHOLD = 16;
 
 function updateLabelVisibility() {
     const zoom = map.getZoom();
     const bounds = map.getBounds();
     
     labelLayers.forEach(item => {
-        const { layer, tooltip, polygonBounds, labelText } = item;
+        const { tooltip, polygonBounds } = item;
         
-        if (!bounds.intersects(polygonBounds)) {
+        if (zoom >= HIDE_ZOOM_THRESHOLD || !bounds.intersects(polygonBounds)) {
             tooltip.style.display = 'none';
-            return;
-        }
-        
-        const fontSize = calculateAdaptiveFontSize(polygonBounds, zoom, labelText);
-        const sw = map.latLngToContainerPoint(polygonBounds.getSouthWest());
-        const ne = map.latLngToContainerPoint(polygonBounds.getNorthEast());
-        const polygonWidth = Math.abs(ne.x - sw.x);
-        const polygonHeight = Math.abs(sw.y - ne.y);
-        
-        const textWidth = labelText.length * fontSize * 0.6;
-        const textHeight = fontSize * 1.5;
-        
-        if (textWidth <= polygonWidth * 0.9 && textHeight <= polygonHeight * 0.8) {
-            tooltip.style.display = 'block';
-            tooltip.style.fontSize = fontSize + 'px';
         } else {
-            tooltip.style.display = 'none';
+            tooltip.style.display = 'block';
         }
     });
 }
@@ -454,51 +783,34 @@ function applyDirectLabelStyles() {
         tooltip.style.boxShadow = 'none';
         tooltip.style.padding = '0';
         tooltip.style.pointerEvents = 'none';
-        
-        // STYLE GIỐNG HÌNH MẪU: ĐEN VỚI VIỀN TRẮNG
+        tooltip.style.fontSize = '9px';
         tooltip.style.color = '#000000';
-        tooltip.style.fontWeight = '700';
+        tooltip.style.fontWeight = '600';
         tooltip.style.fontFamily = 'Roboto, Arial, sans-serif';
-        
-        // Viền trắng bao quanh chữ đen - GIỐNG HÌNH MẪU
-        tooltip.style.textShadow = `
-            -1.5px -1.5px 0 #fff,  
-            1.5px -1.5px 0 #fff,
-            -1.5px 1.5px 0 #fff,
-            1.5px 1.5px 0 #fff,
-            -1.5px 0px 0 #fff,
-            1.5px 0px 0 #fff,
-            0px -1.5px 0 #fff,
-            0px 1.5px 0 #fff,
-            0 0 3px rgba(255,255,255,0.8)
-        `;
-        
-        tooltip.style.letterSpacing = '0.3px';
+        tooltip.style.textShadow = '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff';
         tooltip.style.whiteSpace = 'nowrap';
     });
     
     updateLabelVisibility();
 }
 
-map.on('zoomend', applyDirectLabelStyles);
+map.on('zoomend', updateLabelVisibility);
 map.on('moveend', updateLabelVisibility);
 
-// ===== ĐỌC SHAPEFILE VÙNG LÚA =====
+// ===== ĐỌC SHAPEFILE =====
 const shpZipPath = 'data/VungLuaCLC_3857.zip';
+let vungLuaLayer = null;
 
 fetch(shpZipPath)
     .then(response => response.arrayBuffer())
     .then(buffer => shp.parseZip(buffer))
     .then(geojson => {
-        const geojsonLayer = L.geoJSON(geojson, {
+        vungLuaLayer = L.geoJSON(geojson, {
             style: defaultStyle,
             onEachFeature: function(feature, layer) {
                 layer.on('click', function(e) {
                     L.DomEvent.stopPropagation(e);
-                    
-                    if (lastClickedLayer) {
-                        lastClickedLayer.setStyle(defaultStyle);
-                    }
+                    if (lastClickedLayer) lastClickedLayer.setStyle(defaultStyle);
                     layer.setStyle(highlightStyle);
                     lastClickedLayer = layer;
                     
@@ -509,25 +821,31 @@ fetch(shpZipPath)
                     }
                     tableContent += '</table>';
                     sidebarContent.innerHTML = tableContent;
-                    
                     sidebar.classList.add('active');
                 });
             }
+        }).addTo(map);
+        
+        document.getElementById('layer-vunglua').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                map.addLayer(vungLuaLayer);
+            } else {
+                map.removeLayer(vungLuaLayer);
+            }
         });
         
-        layerControl.addOverlay(geojsonLayer, "Vùng Lúa");
-        map.fitBounds(geojsonLayer.getBounds());
+        map.fitBounds(vungLuaLayer.getBounds());
     })
-    .catch(error => console.error("Lỗi khi đọc file SHP Vùng Lúa:", error));
+    .catch(error => console.error("Lỗi:", error));
 
-// ===== ĐỌC SHAPEFILE RANH XÃ =====
 const ranhXaZipPath = 'data/RanhXa_3857.zip';
+let ranhXaLayer = null;
 
 fetch(ranhXaZipPath)
     .then(response => response.arrayBuffer())
     .then(buffer => shp.parseZip(buffer))
     .then(geojson => {
-        const ranhXaLayer = L.geoJSON(geojson, {
+        ranhXaLayer = L.geoJSON(geojson, {
             style: {
                 color: "#C8A2C8",
                 weight: 2,
@@ -538,18 +856,12 @@ fetch(ranhXaZipPath)
             onEachFeature: function(feature, layer) {
                 if (feature.properties && feature.properties.TenXa) {
                     const labelText = feature.properties.TenXa;
-                    
-                    // Nhãn ĐƠN GIẢN - CHỈ TEXT, STYLE ÁP DỤNG SAU
-                    const labelHtml = `<span>${labelText}</span>`;
-                    
-                    const tooltip = layer.bindTooltip(labelHtml, {
+                    const tooltip = layer.bindTooltip(`<span>${labelText}</span>`, {
                         permanent: true,
                         direction: 'center',
                         className: 'xa-label'
                     });
-
                     layer.openTooltip();
-                    
                     labelLayers.push({
                         layer: layer,
                         tooltip: null,
@@ -559,6 +871,14 @@ fetch(ranhXaZipPath)
                 }
             }
         }).addTo(map);
+
+        document.getElementById('layer-ranhxa').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                map.addLayer(ranhXaLayer);
+            } else {
+                map.removeLayer(ranhXaLayer);
+            }
+        });
 
         setTimeout(() => {
             const tooltips = document.querySelectorAll('.leaflet-tooltip.xa-label');
@@ -570,12 +890,11 @@ fetch(ranhXaZipPath)
             applyDirectLabelStyles();
         }, 500);
     })
-    .catch(error => console.error("Lỗi khi đọc file SHP Ranh Xã:", error));
+    .catch(error => console.error("Lỗi:", error));
 
-map.whenReady(function() {
+map.whenReady(() => {
     setTimeout(() => applyDirectLabelStyles(), 1000);
 });
-
     </script>
 </body>
 </html>
