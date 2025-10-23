@@ -76,16 +76,32 @@ html, body {
     text-align: left; 
     font-weight: bold; 
 }
+
+/* QUAN TRỌNG: CSS tối ưu cho ô dữ liệu - KHÔNG CẮT TỪ GIỮA CHỪNG */
 #sidebar-content tbody td { 
     border-bottom: 1px solid #ddd; 
     padding: 8px 8px; 
     text-align: left; 
-    word-break: break-all; 
+    
+    /* XÓA word-break: break-all - đây là nguyên nhân cắt từ */
+    /* THAY BẰNG: overflow-wrap để giữ nguyên từ */
+    overflow-wrap: break-word; 
+    word-break: normal;
+    
+    /* Chỉ xuống dòng ở khoảng trắng, giữ nguyên từ utuh */
+    white-space: normal;
+    
+    /* Cho phép xuống dòng nhưng ưu tiên giữ từ nguyên vẹn */
+    hyphens: none;
+    
     transition: background-color 0.2s; 
 }
+
 #sidebar-content tbody td:first-child { 
     width: 120px; 
+    font-weight: 600;
 }
+
 #sidebar-content tbody td:hover { 
     background-color: #e6f7e6; 
     cursor: pointer; 
@@ -163,10 +179,10 @@ map.on('click', function() {
     sidebar.classList.remove('sidebar-visible');
 });
 
-// ===== BIẾN LƯU TRỮ THÔNG TIN POLYGON VÀ NHÃN =====
+// BIẾN LƯU TRỮ THÔNG TIN POLYGON VÀ NHÃN
 let labelLayers = [];
 
-// ===== HÀM TÍNH TOÁN HIỂN THỊ NHÃN THEO ZOOM VÀ KÍCH THƯỚC POLYGON =====
+// HÀM TÍNH TOÁN HIỂN THỊ NHÃN THEO ZOOM VÀ KÍCH THƯỚC POLYGON
 function updateLabelVisibility() {
     const zoom = map.getZoom();
     const bounds = map.getBounds();
@@ -188,23 +204,19 @@ function updateLabelVisibility() {
     labelLayers.forEach(item => {
         const { layer, tooltip, polygonBounds, labelText } = item;
         
-        // Kiểm tra polygon có trong viewport không
         if (!bounds.intersects(polygonBounds)) {
             tooltip.style.display = 'none';
             return;
         }
         
-        // Tính kích thước polygon trên màn hình (pixels)
         const sw = map.latLngToContainerPoint(polygonBounds.getSouthWest());
         const ne = map.latLngToContainerPoint(polygonBounds.getNorthEast());
         const polygonWidth = Math.abs(ne.x - sw.x);
         const polygonHeight = Math.abs(sw.y - ne.y);
         
-        // Ước lượng kích thước text (pixels) - trung bình 1 ký tự ~ 0.6 * fontSize
         const textWidth = labelText.length * baseFontSize * 0.6;
         const textHeight = baseFontSize * 1.5;
         
-        // CHỈ HIỂN THỊ NẾU TEXT NẰM TRỌN TRONG POLYGON
         if (textWidth < polygonWidth * 0.9 && textHeight < polygonHeight * 0.8) {
             tooltip.style.display = 'block';
             tooltip.style.fontSize = baseFontSize + 'px';
@@ -214,7 +226,7 @@ function updateLabelVisibility() {
     });
 }
 
-// ===== HÀM ÁP DỤNG STYLE TRỰC TIẾP VÀO TOOLTIP =====
+// HÀM ÁP DỤNG STYLE TRỰC TIẾP VÀO TOOLTIP
 function applyDirectLabelStyles() {
     const tooltips = document.querySelectorAll('.leaflet-tooltip.xa-label');
     
@@ -225,7 +237,6 @@ function applyDirectLabelStyles() {
         tooltip.style.padding = '0';
         tooltip.style.pointerEvents = 'none';
         
-        // Style text với font tiếng Việt
         tooltip.style.color = '#FFFF00'; 
         tooltip.style.fontWeight = '900';
         tooltip.style.fontFamily = "'Be Vietnam Pro', 'Roboto', Arial, sans-serif";
@@ -235,7 +246,6 @@ function applyDirectLabelStyles() {
         tooltip.style.whiteSpace = 'nowrap';
     });
     
-    // Gọi hàm cập nhật hiển thị
     updateLabelVisibility();
 }
 
@@ -281,7 +291,7 @@ fetch(shpZipPath)
     .catch(error => console.error("Lỗi khi đọc file SHP Vùng Lúa:", error));
 
 
-// ===== 10. TẢI LỚP RANH XÃ VỚI LOGIC HIỂN THỊ NHÃN THÔNG MINH =====
+// 10. TẢI LỚP RANH XÃ VỚI LOGIC HIỂN THỊ NHÃN THÔNG MINH
 const ranhXaZipPath = 'data/RanhXa_3857.zip'; 
 
 fetch(ranhXaZipPath)
@@ -301,7 +311,6 @@ fetch(ranhXaZipPath)
                 if (feature.properties && feature.properties.TenXa) {
                     const labelText = feature.properties.TenXa;
                     
-                    // Tạo HTML với font tiếng Việt
                     const labelHtml = `<span style="
                         color: #FFFF00;
                         font-size: 13px;
@@ -321,10 +330,9 @@ fetch(ranhXaZipPath)
 
                     layer.openTooltip();
                     
-                    // Lưu thông tin để xử lý sau
                     labelLayers.push({
                         layer: layer,
-                        tooltip: null, // Sẽ được gán sau
+                        tooltip: null,
                         polygonBounds: layer.getBounds(),
                         labelText: labelText
                     });
@@ -332,7 +340,6 @@ fetch(ranhXaZipPath)
             }
         }).addTo(map);
 
-        // Sau khi layer được add, lấy tất cả tooltip elements
         setTimeout(() => {
             const tooltips = document.querySelectorAll('.leaflet-tooltip.xa-label');
             tooltips.forEach((tooltipEl, index) => {
@@ -356,7 +363,6 @@ fetch(ranhXaZipPath)
         alert("Không thể tải file RanhXa_3857.zip. Kiểm tra đường dẫn file.");
     });
 
-// Áp dụng style khi map load xong
 map.whenReady(function() {
     setTimeout(() => {
         applyDirectLabelStyles();
