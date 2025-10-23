@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lúa CLC Đồng Tháp</title>
+    <title>WebGIS (CSS Đơn giản)</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -11,7 +11,7 @@
     <script src="https://unpkg.com/shpjs@3.6.2/dist/shp.js"></script>
     
     <style>
-/* CSS Layout (Sidebar bên phải, ẩn/hiện) */
+/* CSS Layout (Sidebar bên phải, ẩn/hiện) - ĐÃ SẠCH */
 html, body {
     height: 100vh; 
     margin: 0;
@@ -46,7 +46,7 @@ html, body {
     z-index: 1; 
 }
 
-/* CSS Bảng thông tin (giống hình) */
+/* CSS Bảng thông tin - ĐÃ SẠCH */
 #sidebar h2 {
     margin: 0;
     padding: 15px;
@@ -81,9 +81,37 @@ html, body {
     width: 120px; 
 }
 #sidebar-content tbody td:hover {
-    background-color: #e6f7e6; /* Màu xanh lá nhạt */
+    background-color: #e6f7e6;
     cursor: pointer;
 }
+
+/* --- MỚI: CSS STYLE NHÃN CỐ ĐỊNH --- */
+/* Xóa nền và viền của tooltip */
+.leaflet-tooltip.xa-label {
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+/* Style cho nội dung nhãn */
+.xa-label .leaflet-tooltip-content {
+    font-weight: 900;
+    font-size: 12px; /* Cỡ chữ cố định */
+    color: #333333; /* Màu xám đậm */
+    
+    /* Thêm viền trắng (halo) để chữ nổi bật */
+    text-shadow: 1.5px 1.5px 2px #FFF, -1.5px 1.5px 2px #FFF, 1.5px -1.5px 2px #FFF, -1.5px -1.5px 2px #FFF;
+}
+
+/* --- MỚI: ẨN NHÃN KHI ZOOM QUÁ GẦN (theo yêu cầu) --- */
+/* Leaflet tự thêm class zoom vào bản đồ */
+.leaflet-zoom-15 .xa-label,
+.leaflet-zoom-16 .xa-label,
+.leaflet-zoom-17 .xa-label,
+.leaflet-zoom-18 .xa-label,
+.leaflet-zoom-19 .xa-label {
+    display: none;
+}
+
     </style>
 </head>
 <body>
@@ -98,42 +126,33 @@ html, body {
     <div id="map"></div>
 
     <script>
+// SCRIPT SẠCH 100%
 // 1. Khởi tạo bản đồ Leaflet
 const map = L.map('map').setView([10.7769, 106.7009], 10); 
 
-// --- ĐÃ SỬA LỖI ---
-
-// 2. ĐỊNH NGHĨA CÁC LỚP BẢN ĐỒ NỀN (Base Maps)
+// 2. ĐỊNH NGHĨA CÁC LỚP BẢN ĐỒ NỀN
 const osm = L.tileLayer.provider('OpenStreetMap.Mapnik');
-const esriSatellite = L.tileLayer.provider('Esri.WorldImagery').addTo(map); // Mặc định là Vệ tinh
-
+const esriSatellite = L.tileLayer.provider('Esri.WorldImagery').addTo(map); 
 const baseMaps = {
     "OpenStreetMap": osm,
     "Vệ tinh (Esri)": esriSatellite 
 };
 
-// 3. ĐỊNH NGHĨA CÁC LỚP PHỦ (Overlay Maps)
-// MỚI: Dùng lớp 'CartoDB.PositronOnlyLabels' thay thế cho lớp Esri bị hỏng
-const cartoLabels = L.tileLayer.provider('CartoDB.PositronOnlyLabels').addTo(map); 
-
+// 3. ĐỊNH NGHĨA CÁC LỚP PHỦ
+const cartoLabels = L.tileLayer.provider('CartoDB.PositronOnlyLabels'); 
 const overlayMaps = {
-    "Chỉ dẫn (Đường & Địa danh)": cartoLabels // MỚI: Cập nhật biến
+    "Chỉ dẫn (Đường & Địa danh)": cartoLabels
 };
 
-// 4. THÊM BỘ CHỌN LỚP (Base + Overlay)
-L.control.layers(baseMaps, overlayMaps).addTo(map);
-
-// --- HẾT PHẦN SỬA LỖI ---
-
+// 4. THÊM BỘ CHỌN LỚP (CHỈ 1 LẦN)
+const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
 
 // 5. Lấy phần tử sidebar
 const sidebar = document.getElementById('sidebar');
 const sidebarContent = document.getElementById('sidebar-content'); 
-
-// 6. Biến để lưu trữ layer đang được chọn
 let lastClickedLayer = null;
 
-// 7. Định nghĩa style (không đổi)
+// 6. Định nghĩa style (cho lớp Vùng Lúa)
 const defaultStyle = {
     color: "#ff7800", weight: 2, opacity: 0.8, fillColor: "#ff7800", fillOpacity: 0.3
 };
@@ -141,73 +160,85 @@ const highlightStyle = {
     color: "#00FFFF", weight: 4, opacity: 1, fillColor: "#00FFFF", fillOpacity: 0.5   
 };
 
-// 8. Sự kiện khi click vào bản đồ (để clear VÀ ẨN sidebar)
+// 7. Sự kiện khi click vào bản đồ
 map.on('click', function() {
     if (lastClickedLayer) {
         lastClickedLayer.setStyle(defaultStyle); 
         lastClickedLayer = null;
     }
     sidebarContent.innerHTML = '<p>Click vào một thửa đất trên bản đồ để xem thông tin.</p>';
-    sidebar.classList.remove('sidebar-visible'); // Ẩn sidebar
+    sidebar.classList.remove('sidebar-visible');
 });
 
-// 9. Đường dẫn đến file Shapefile .zip
-const shpZipPath = 'data/VungLuaCLC_3857.zip'; // Đảm bảo tên file này chính xác!
+// --- MỚI: ĐÃ XÓA TOÀN BỘ JAVASCRIPT STYLE NHÃN ---
+// (Xóa hàm updateLabelFontSize, xóa hàm setLabelStyle, xóa baselayerchange)
 
-// 10. Đọc và vẽ Shapefile
-// (Code này bây giờ sẽ chạy được)
+
+// 9. Đường dẫn đến file Shapefile .zip (Vùng Lúa)
+const shpZipPath = 'data/VungLuaCLC_3857.zip';
+
+// 10. Đọc và vẽ Shapefile "Vùng Lúa" (Có click)
 fetch(shpZipPath)
     .then(response => response.arrayBuffer()) 
     .then(buffer => shp.parseZip(buffer)) 
     .then(geojson => {
-        
         const geojsonLayer = L.geoJSON(geojson, {
-            
             style: defaultStyle, 
-
             onEachFeature: function(feature, layer) {
-                
                 layer.on('click', function(e) {
-                    
                     L.DomEvent.stopPropagation(e);
-
                     if (lastClickedLayer) {
                         lastClickedLayer.setStyle(defaultStyle);
                     }
                     layer.setStyle(highlightStyle);
                     lastClickedLayer = layer;
-
-                    const props = feature.properties;
                     
+                    const props = feature.properties;
                     let tableContent = '<table>';
-                    tableContent += `
-                        <thead>
-                            <tr>
-                                <th>Tên cột</th>
-                                <th>Giá trị</th>
-                            </tr>
-                        </thead>
-                    `;
+                    tableContent += `<thead><tr><th>Tên cột</th><th>Giá trị</th></tr></thead>`;
                     tableContent += '<tbody>';
                     for (let key in props) {
-                        tableContent += `<tr>
-                                            <td>${key}</td>
-                                            <td>${props[key]}</td>
-                                         </tr>`;
+                        tableContent += `<tr><td>${key}</td><td>${props[key]}</td></tr>`;
                     }
                     tableContent += '</tbody></table>';
-                    
                     sidebarContent.innerHTML = tableContent;
                     sidebar.classList.add('sidebar-visible');
                 });
             }
-        }).addTo(map); 
-
+        }); 
+        
+        layerControl.addOverlay(geojsonLayer, "Vùng Lúa");
         map.fitBounds(geojsonLayer.getBounds());
     })
+    .catch(error => console.error("Lỗi khi đọc file SHP Vùng Lúa:", error));
+
+
+// 11. TẢI LỚP RANH XÃ (LUÔN LUÔN BẬT)
+const ranhXaZipPath = 'data/RanhXa_3857.zip'; 
+
+fetch(ranhXaZipPath)
+    .then(response => response.arrayBuffer())
+    .then(buffer => shp.parseZip(buffer))
+    .then(geojson => {
+        
+        const ranhXaLayer = L.geoJSON(geojson, {
+            style: { color: "#C8A2C8", weight: 2, opacity: 0.8, fillOpacity: 0.0 },
+            interactive: false,
+            onEachFeature: function(feature, layer) {
+                if (feature.properties && feature.properties.TenXa) {
+                    layer.bindTooltip(feature.properties.TenXa, {
+                        permanent: true,
+                        direction: 'center',
+                        className: 'xa-label' // Gán class chung để CSS xử lý
+                    }).openTooltip();
+                }
+            }
+        }).addTo(map);
+        // Không cần gọi hàm JS style nào ở đây nữa
+    })
     .catch(error => {
-        console.error("Lỗi khi đọc Shapefile:", error);
-        alert("Không thể tải hoặc đọc file .zip. Hãy kiểm tra F12 > Console để xem lỗi.");
+        console.error("Lỗi khi đọc file SHP Ranh Xã:", error);
+        alert("Không thể tải file RanhXa_3857.zip. Hãy kiểm tra tên file.");
     });
 
     </script>
