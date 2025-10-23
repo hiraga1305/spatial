@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lúa CLC Đồng Tháp</title>
     
-    <!-- Font tiếng Việt từ Google Fonts -->
+    <!-- Font Roboto từ Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome cho icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -16,90 +19,233 @@
     <script src="https://unpkg.com/shpjs@3.6.2/dist/shp.js"></script>
     
     <style>
-/* CSS Layout cơ bản */
-html, body {
-    height: 100vh; 
+/* Reset và Layout cơ bản */
+* {
     margin: 0;
     padding: 0;
-    font-family: 'Be Vietnam Pro', 'Roboto', Arial, sans-serif;
-    overflow: hidden; 
+    box-sizing: border-box;
 }
-#sidebar {
-    position: absolute; 
-    right: 0;
-    top: 0;
-    width: 350px; 
-    height: 100vh; 
-    background: #ffffff;
-    padding: 0;
-    box-sizing: border-box; 
-    overflow-y: auto; 
-    box-shadow: -2px 0 5px rgba(0,0,0,0.1); 
-    z-index: 1000; 
-    transform: translateX(100%);
-    transition: transform 0.3s ease-in-out;
+
+html, body {
+    height: 100vh;
+    font-family: 'Roboto', Arial, sans-serif;
+    overflow: hidden;
 }
-#sidebar.sidebar-visible {
-    transform: translateX(0);
-}
+
 #map {
-    position: absolute; 
+    position: absolute;
     left: 0;
     top: 0;
     right: 0;
     bottom: 0;
-    z-index: 1; 
+    z-index: 1;
 }
 
-/* CSS Bảng thông tin */
-#sidebar h2 { 
-    margin: 0; 
-    padding: 15px; 
-    background-color: #f9f9f9; 
-    border-bottom: 1px solid #ddd; 
-    font-size: 18px; 
-    font-family: 'Be Vietnam Pro', sans-serif;
-}
-#sidebar-content { 
-    padding: 15px; 
-}
-#sidebar-content table { 
-    width: 100%; 
-    border-collapse: collapse; 
-}
-#sidebar-content thead tr { 
-    background-color: #f2f2f2; 
-    border-bottom: 1px solid #ddd; 
-}
-#sidebar-content thead th { 
-    padding: 10px 8px; 
-    text-align: left; 
-    font-weight: bold; 
+/* ===== GIẢM KÍCH THƯỚC ZOOM BUTTONS ===== */
+.leaflet-control-zoom {
+    margin-left: 10px !important;
+    margin-top: 10px !important;
 }
 
-/* CSS tối ưu cho ô dữ liệu - KHÔNG CẮT TỪ GIỮA CHỪNG */
-#sidebar-content tbody td { 
-    border-bottom: 1px solid #ddd; 
-    padding: 8px 8px; 
-    text-align: left; 
-    overflow-wrap: break-word; 
-    word-break: normal;
-    white-space: normal;
-    hyphens: none;
-    transition: background-color 0.2s; 
+.leaflet-control-zoom a {
+    width: 26px !important;
+    height: 26px !important;
+    line-height: 26px !important;
+    font-size: 16px !important;
 }
 
-#sidebar-content tbody td:first-child { 
-    width: 120px; 
+/* ===== TÁCH LAYER CONTROL RA KHỎI ZOOM ===== */
+.leaflet-top.leaflet-right {
+    left: 10px !important;
+    right: auto !important;
+    top: 50px !important; /* Đẩy xuống dưới zoom buttons */
+}
+
+.leaflet-control-layers {
+    font-family: 'Roboto', Arial, sans-serif !important;
+    font-size: 13px !important;
+}
+
+/* ===== SIDEBAR ===== */
+#sidebar {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 320px;
+    height: 100vh;
+    background: #ffffff;
+    box-shadow: -3px 0 10px rgba(0, 0, 0, 0.15);
+    z-index: 2000;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+#sidebar.active {
+    transform: translateX(0);
+}
+
+/* Header sidebar */
+.sidebar-header {
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    color: white;
+    padding: 12px 15px;
+    font-size: 15px;
     font-weight: 600;
+    border-bottom: 2px solid #27ae60;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-#sidebar-content tbody td:hover { 
-    background-color: #e6f7e6; 
-    cursor: pointer; 
+.sidebar-header i {
+    margin-right: 8px;
 }
 
-/* CSS cho tooltip */
+/* Content sidebar */
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    font-size: 13px;
+}
+
+.sidebar-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+    background: #27ae60;
+    border-radius: 3px;
+}
+
+/* Tabs trong sidebar */
+.sidebar-tabs {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 15px;
+    background: #f8f9fa;
+}
+
+.sidebar-tab {
+    flex: 1;
+    padding: 10px 8px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.sidebar-tab:hover {
+    background: #e9ecef;
+    color: #2ecc71;
+}
+
+.sidebar-tab.active {
+    color: #2ecc71;
+    border-bottom-color: #2ecc71;
+    background: white;
+}
+
+/* Bảng thông tin nhỏ gọn */
+.info-table {
+    width: 100%;
+    font-size: 12px;
+    border-collapse: collapse;
+}
+
+.info-table tr {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.info-table tr:last-child {
+    border-bottom: none;
+}
+
+.info-table td {
+    padding: 8px 6px;
+    line-height: 1.4;
+}
+
+.info-table td:first-child {
+    font-weight: 600;
+    color: #495057;
+    width: 40%;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.info-table td:last-child {
+    color: #212529;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+/* Message khi chưa chọn */
+.info-message {
+    text-align: center;
+    padding: 30px 20px;
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.info-message i {
+    font-size: 48px;
+    color: #dee2e6;
+    margin-bottom: 15px;
+    display: block;
+}
+
+/* ===== NÚT TOGGLE TỐI GIẢN ===== */
+#sidebar-toggle {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1999;
+    background: #2ecc71;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 60px;
+    cursor: pointer;
+    box-shadow: -3px 0 8px rgba(0, 0, 0, 0.15);
+    border-radius: 6px 0 0 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+#sidebar-toggle:hover {
+    background: #27ae60;
+    width: 35px;
+    box-shadow: -5px 0 12px rgba(0, 0, 0, 0.2);
+}
+
+#sidebar-toggle i {
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+#sidebar.active + #sidebar-toggle {
+    right: 320px;
+}
+
+#sidebar.active + #sidebar-toggle i {
+    transform: rotate(180deg);
+}
+
+/* ===== NHÃN XÃ - GIỐNG HÌNH MẪU: ĐEN VỚI VIỀN TRẮNG ===== */
 .leaflet-tooltip.xa-label {
     background: none !important;
     border: none !important;
@@ -111,107 +257,151 @@ html, body {
 </head>
 <body>
 
+    <!-- Bản đồ -->
+    <div id="map"></div>
+
+    <!-- Sidebar -->
     <div id="sidebar">
-        <h2>Thông tin thửa đất</h2>
-        <div id="sidebar-content">
-            <p>Click vào một thửa đất trên bản đồ để xem thông tin.</p>
+        <div class="sidebar-header">
+            <span><i class="fas fa-info-circle"></i>Thông tin chi tiết</span>
+        </div>
+        
+        <div class="sidebar-tabs">
+            <div class="sidebar-tab active" onclick="switchTab('info')">
+                <i class="fas fa-map"></i> Bản đồ
+            </div>
+            <div class="sidebar-tab" onclick="switchTab('layers')">
+                <i class="fas fa-layer-group"></i> Lớp
+            </div>
+            <div class="sidebar-tab" onclick="switchTab('analysis')">
+                <i class="fas fa-chart-bar"></i> Phân tích
+            </div>
+        </div>
+        
+        <div class="sidebar-content" id="sidebar-content">
+            <div class="info-message">
+                <i class="fas fa-mouse-pointer"></i>
+                <p>Click vào một thửa đất trên bản đồ để xem thông tin chi tiết</p>
+            </div>
         </div>
     </div>
 
-    <div id="map"></div>
+    <!-- Nút Toggle -->
+    <button id="sidebar-toggle" onclick="toggleSidebar()" title="Mở/Đóng thông tin">
+        <i class="fas fa-chevron-left"></i>
+    </button>
 
     <script>
-// 1. Khởi tạo bản đồ
-const map = L.map('map').setView([10.7769, 106.7009], 10); 
+// ===== KHỞI TẠO BẢN ĐỒ =====
+const map = L.map('map').setView([10.7769, 106.7009], 10);
 
-// 2. Lớp bản đồ nền
+// Lớp bản đồ nền
 const osm = L.tileLayer.provider('OpenStreetMap.Mapnik');
-const esriSatellite = L.tileLayer.provider('Esri.WorldImagery').addTo(map); 
+const esriSatellite = L.tileLayer.provider('Esri.WorldImagery').addTo(map);
 const baseMaps = {
     "OpenStreetMap": osm,
-    "Vệ tinh (Esri)": esriSatellite 
+    "Vệ tinh (Esri)": esriSatellite
 };
 
-// 3. Lớp phủ
-const cartoLabels = L.tileLayer.provider('CartoDB.PositronOnlyLabels'); 
+// Lớp phủ
+const cartoLabels = L.tileLayer.provider('CartoDB.PositronOnlyLabels');
 const overlayMaps = {
     "Chỉ dẫn (Đường & Địa danh)": cartoLabels
 };
 
-// 4. Bộ chọn lớp
-const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+// Bộ chọn lớp
+const layerControl = L.control.layers(baseMaps, overlayMaps, {
+    position: 'topright'
+}).addTo(map);
 
-// 5. Sidebar
+// ===== XỬ LÝ SIDEBAR =====
 const sidebar = document.getElementById('sidebar');
-const sidebarContent = document.getElementById('sidebar-content'); 
+const sidebarContent = document.getElementById('sidebar-content');
 let lastClickedLayer = null;
 
-// 6. Style cho lớp Vùng Lúa
-const defaultStyle = {
-    color: "#ff7800", 
-    weight: 2, 
-    opacity: 0.8, 
-    fillColor: "#ff7800", 
-    fillOpacity: 0.3
-};
-const highlightStyle = {
-    color: "#00FFFF", 
-    weight: 4, 
-    opacity: 1, 
-    fillColor: "#00FFFF", 
-    fillOpacity: 0.5   
-};
+function toggleSidebar() {
+    sidebar.classList.toggle('active');
+}
 
-// 7. Click vào map
+function switchTab(tabName) {
+    document.querySelectorAll('.sidebar-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    event.target.closest('.sidebar-tab').classList.add('active');
+    
+    if (tabName === 'info') {
+        // Giữ nguyên nội dung
+    } else if (tabName === 'layers') {
+        sidebarContent.innerHTML = `
+            <div class="info-message">
+                <i class="fas fa-layer-group"></i>
+                <p>Quản lý các lớp dữ liệu</p>
+            </div>
+        `;
+    } else if (tabName === 'analysis') {
+        sidebarContent.innerHTML = `
+            <div class="info-message">
+                <i class="fas fa-chart-bar"></i>
+                <p>Công cụ phân tích</p>
+            </div>
+        `;
+    }
+}
+
 map.on('click', function() {
     if (lastClickedLayer) {
-        lastClickedLayer.setStyle(defaultStyle); 
+        lastClickedLayer.setStyle(defaultStyle);
         lastClickedLayer = null;
     }
-    sidebarContent.innerHTML = '<p>Click vào một thửa đất trên bản đồ để xem thông tin.</p>';
-    sidebar.classList.remove('sidebar-visible');
+    sidebarContent.innerHTML = `
+        <div class="info-message">
+            <i class="fas fa-mouse-pointer"></i>
+            <p>Click vào một thửa đất trên bản đồ để xem thông tin chi tiết</p>
+        </div>
+    `;
 });
 
-// BIẾN LƯU TRỮ THÔNG TIN POLYGON VÀ NHÃN
+// ===== STYLE CHO LỚP VÙNG LÚA =====
+const defaultStyle = {
+    color: "#ff7800",
+    weight: 2,
+    opacity: 0.8,
+    fillColor: "#ff7800",
+    fillOpacity: 0.3
+};
+
+const highlightStyle = {
+    color: "#00FFFF",
+    weight: 4,
+    opacity: 1,
+    fillColor: "#00FFFF",
+    fillOpacity: 0.5
+};
+
+// ===== XỬ LÝ NHÃN XÃ =====
 let labelLayers = [];
 
-// ===== HÀM MỚI: TÍNH FONT SIZE ĐỘNG DỰA TRÊN ZOOM VÀ KÍCH THƯỚC POLYGON =====
 function calculateAdaptiveFontSize(polygonBounds, zoom, labelText) {
-    // Tính kích thước polygon trên màn hình (pixels)
     const sw = map.latLngToContainerPoint(polygonBounds.getSouthWest());
     const ne = map.latLngToContainerPoint(polygonBounds.getNorthEast());
     const polygonWidth = Math.abs(ne.x - sw.x);
     const polygonHeight = Math.abs(sw.y - ne.y);
     
-    // Font size cơ bản theo zoom - TỰ ĐỘNG TỐ LÊN KHI ZOOM VÀO
     let baseFontSize;
-    if (zoom >= 14) {
-        baseFontSize = 18;  // Rất lớn khi zoom gần
-    } else if (zoom >= 13) {
-        baseFontSize = 16;
-    } else if (zoom >= 12) {
-        baseFontSize = 14;
-    } else if (zoom >= 11) {
-        baseFontSize = 12;
-    } else if (zoom >= 10) {
-        baseFontSize = 10;
-    } else if (zoom >= 9) {
-        baseFontSize = 9;
-    } else if (zoom >= 8) {
-        baseFontSize = 8;
-    } else {
-        baseFontSize = 7;   // Nhỏ nhất khi zoom xa
-    }
+    if (zoom >= 14) baseFontSize = 18;
+    else if (zoom >= 13) baseFontSize = 16;
+    else if (zoom >= 12) baseFontSize = 14;
+    else if (zoom >= 11) baseFontSize = 12;
+    else if (zoom >= 10) baseFontSize = 10;
+    else if (zoom >= 9) baseFontSize = 9;
+    else if (zoom >= 8) baseFontSize = 8;
+    else baseFontSize = 7;
     
-    // Tính kích thước tối đa của text có thể hiển thị trong polygon
-    const maxTextWidth = polygonWidth * 0.85;  // 85% chiều rộng polygon
-    const maxTextHeight = polygonHeight * 0.7; // 70% chiều cao polygon
+    const maxTextWidth = polygonWidth * 0.85;
+    const maxTextHeight = polygonHeight * 0.7;
     
-    // Ước tính kích thước text với font size hiện tại
     const estimatedTextWidth = labelText.length * baseFontSize * 0.6;
-    const estimatedTextHeight = baseFontSize * 1.5;
-    
-    // Điều chỉnh font size nếu text quá lớn cho polygon
     let adjustedFontSize = baseFontSize;
     
     if (estimatedTextWidth > maxTextWidth) {
@@ -222,13 +412,9 @@ function calculateAdaptiveFontSize(polygonBounds, zoom, labelText) {
         adjustedFontSize = Math.min(adjustedFontSize, Math.floor(maxTextHeight / 1.5));
     }
     
-    // Đảm bảo font size tối thiểu là 6px để vẫn đọc được
-    adjustedFontSize = Math.max(6, adjustedFontSize);
-    
-    return adjustedFontSize;
+    return Math.max(6, adjustedFontSize);
 }
 
-// ===== HÀM CẬP NHẬT HIỂN THỊ NHÃN THÔNG MINH =====
 function updateLabelVisibility() {
     const zoom = map.getZoom();
     const bounds = map.getBounds();
@@ -236,16 +422,12 @@ function updateLabelVisibility() {
     labelLayers.forEach(item => {
         const { layer, tooltip, polygonBounds, labelText } = item;
         
-        // Kiểm tra polygon có trong viewport không
         if (!bounds.intersects(polygonBounds)) {
             tooltip.style.display = 'none';
             return;
         }
         
-        // Tính font size thích hợp
         const fontSize = calculateAdaptiveFontSize(polygonBounds, zoom, labelText);
-        
-        // Kiểm tra text có vừa trong polygon không
         const sw = map.latLngToContainerPoint(polygonBounds.getSouthWest());
         const ne = map.latLngToContainerPoint(polygonBounds.getNorthEast());
         const polygonWidth = Math.abs(ne.x - sw.x);
@@ -254,18 +436,15 @@ function updateLabelVisibility() {
         const textWidth = labelText.length * fontSize * 0.6;
         const textHeight = fontSize * 1.5;
         
-        // LUÔN HIỂN THỊ nếu text vừa vặn trong polygon
         if (textWidth <= polygonWidth * 0.9 && textHeight <= polygonHeight * 0.8) {
             tooltip.style.display = 'block';
             tooltip.style.fontSize = fontSize + 'px';
         } else {
-            // Ẩn nếu không vừa
             tooltip.style.display = 'none';
         }
     });
 }
 
-// ===== HÀM ÁP DỤNG STYLE TRỰC TIẾP VÀO TOOLTIP =====
 function applyDirectLabelStyles() {
     const tooltips = document.querySelectorAll('.leaflet-tooltip.xa-label');
     
@@ -276,35 +455,47 @@ function applyDirectLabelStyles() {
         tooltip.style.padding = '0';
         tooltip.style.pointerEvents = 'none';
         
-        tooltip.style.color = '#FFFF00'; 
-        tooltip.style.fontWeight = '900';
-        tooltip.style.fontFamily = "'Be Vietnam Pro', 'Roboto', Arial, sans-serif";
-        tooltip.style.textShadow = '-2px -2px 3px #000, 2px -2px 3px #000, -2px 2px 3px #000, 2px 2px 3px #000, 0 0 8px #000';
-        tooltip.style.webkitTextStroke = '1px #000';
+        // STYLE GIỐNG HÌNH MẪU: ĐEN VỚI VIỀN TRẮNG
+        tooltip.style.color = '#000000';
+        tooltip.style.fontWeight = '700';
+        tooltip.style.fontFamily = 'Roboto, Arial, sans-serif';
+        
+        // Viền trắng bao quanh chữ đen - GIỐNG HÌNH MẪU
+        tooltip.style.textShadow = `
+            -1.5px -1.5px 0 #fff,  
+            1.5px -1.5px 0 #fff,
+            -1.5px 1.5px 0 #fff,
+            1.5px 1.5px 0 #fff,
+            -1.5px 0px 0 #fff,
+            1.5px 0px 0 #fff,
+            0px -1.5px 0 #fff,
+            0px 1.5px 0 #fff,
+            0 0 3px rgba(255,255,255,0.8)
+        `;
+        
         tooltip.style.letterSpacing = '0.3px';
         tooltip.style.whiteSpace = 'nowrap';
     });
     
-    // Gọi hàm cập nhật hiển thị
     updateLabelVisibility();
 }
 
-// 8. Gọi hàm khi zoom hoặc di chuyển map
 map.on('zoomend', applyDirectLabelStyles);
 map.on('moveend', updateLabelVisibility);
 
-// 9. Đọc Shapefile Vùng Lúa
+// ===== ĐỌC SHAPEFILE VÙNG LÚA =====
 const shpZipPath = 'data/VungLuaCLC_3857.zip';
 
 fetch(shpZipPath)
-    .then(response => response.arrayBuffer()) 
-    .then(buffer => shp.parseZip(buffer)) 
+    .then(response => response.arrayBuffer())
+    .then(buffer => shp.parseZip(buffer))
     .then(geojson => {
         const geojsonLayer = L.geoJSON(geojson, {
-            style: defaultStyle, 
+            style: defaultStyle,
             onEachFeature: function(feature, layer) {
                 layer.on('click', function(e) {
                     L.DomEvent.stopPropagation(e);
+                    
                     if (lastClickedLayer) {
                         lastClickedLayer.setStyle(defaultStyle);
                     }
@@ -312,55 +503,44 @@ fetch(shpZipPath)
                     lastClickedLayer = layer;
                     
                     const props = feature.properties;
-                    let tableContent = '<table>';
-                    tableContent += `<thead><tr><th>Tên cột</th><th>Giá trị</th></tr></thead>`;
-                    tableContent += '<tbody>';
+                    let tableContent = '<table class="info-table">';
                     for (let key in props) {
                         tableContent += `<tr><td>${key}</td><td>${props[key]}</td></tr>`;
                     }
-                    tableContent += '</tbody></table>';
+                    tableContent += '</table>';
                     sidebarContent.innerHTML = tableContent;
-                    sidebar.classList.add('sidebar-visible');
+                    
+                    sidebar.classList.add('active');
                 });
             }
-        }); 
+        });
         
         layerControl.addOverlay(geojsonLayer, "Vùng Lúa");
         map.fitBounds(geojsonLayer.getBounds());
     })
     .catch(error => console.error("Lỗi khi đọc file SHP Vùng Lúa:", error));
 
-
-// ===== 10. TẢI LỚP RANH XÃ VỚI LOGIC ZOOM THÔNG MINH =====
-const ranhXaZipPath = 'data/RanhXa_3857.zip'; 
+// ===== ĐỌC SHAPEFILE RANH XÃ =====
+const ranhXaZipPath = 'data/RanhXa_3857.zip';
 
 fetch(ranhXaZipPath)
     .then(response => response.arrayBuffer())
     .then(buffer => shp.parseZip(buffer))
     .then(geojson => {
-        
         const ranhXaLayer = L.geoJSON(geojson, {
-            style: { 
-                color: "#C8A2C8", 
-                weight: 2, 
-                opacity: 0.8, 
-                fillOpacity: 0.0 
+            style: {
+                color: "#C8A2C8",
+                weight: 2,
+                opacity: 0.8,
+                fillOpacity: 0.0
             },
             interactive: false,
             onEachFeature: function(feature, layer) {
                 if (feature.properties && feature.properties.TenXa) {
                     const labelText = feature.properties.TenXa;
                     
-                    const labelHtml = `<span style="
-                        color: #FFFF00;
-                        font-size: 10px;
-                        font-weight: 900;
-                        font-family: 'Be Vietnam Pro', 'Roboto', Arial, sans-serif;
-                        text-shadow: -2px -2px 3px #000, 2px -2px 3px #000, -2px 2px 3px #000, 2px 2px 3px #000, 0 0 8px #000;
-                        -webkit-text-stroke: 1px #000;
-                        letter-spacing: 0.3px;
-                        white-space: nowrap;
-                    ">${labelText}</span>`;
+                    // Nhãn ĐƠN GIẢN - CHỈ TEXT, STYLE ÁP DỤNG SAU
+                    const labelHtml = `<span>${labelText}</span>`;
                     
                     const tooltip = layer.bindTooltip(labelHtml, {
                         permanent: true,
@@ -387,26 +567,13 @@ fetch(ranhXaZipPath)
                     labelLayers[index].tooltip = tooltipEl;
                 }
             });
-            
             applyDirectLabelStyles();
         }, 500);
-
-        ranhXaLayer.on('add', function() {
-            setTimeout(() => {
-                applyDirectLabelStyles();
-            }, 200);
-        });
-
     })
-    .catch(error => {
-        console.error("Lỗi khi đọc file SHP Ranh Xã:", error);
-        alert("Không thể tải file RanhXa_3857.zip. Kiểm tra đường dẫn file.");
-    });
+    .catch(error => console.error("Lỗi khi đọc file SHP Ranh Xã:", error));
 
 map.whenReady(function() {
-    setTimeout(() => {
-        applyDirectLabelStyles();
-    }, 1000);
+    setTimeout(() => applyDirectLabelStyles(), 1000);
 });
 
     </script>
