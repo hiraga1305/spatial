@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGIS (CSS Đơn giản)</title>
+    <title>WebGIS - Nhãn Xã Tối Ưu Tiếng Việt</title>
+    
+    <!-- Font tiếng Việt từ Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -11,12 +16,12 @@
     <script src="https://unpkg.com/shpjs@3.6.2/dist/shp.js"></script>
     
     <style>
-/* CSS Layout (Sidebar bên phải, ẩn/hiện) - ĐÃ SẠCH */
+/* CSS Layout cơ bản */
 html, body {
     height: 100vh; 
     margin: 0;
     padding: 0;
-    font-family: Arial, sans-serif;
+    font-family: 'Be Vietnam Pro', 'Roboto', Arial, sans-serif;
     overflow: hidden; 
 }
 #sidebar {
@@ -46,72 +51,53 @@ html, body {
     z-index: 1; 
 }
 
-/* CSS Bảng thông tin - ĐÃ SẠCH */
-#sidebar h2 {
-    margin: 0;
-    padding: 15px;
-    background-color: #f9f9f9;
-    border-bottom: 1px solid #ddd;
-    font-size: 18px;
+/* CSS Bảng thông tin */
+#sidebar h2 { 
+    margin: 0; 
+    padding: 15px; 
+    background-color: #f9f9f9; 
+    border-bottom: 1px solid #ddd; 
+    font-size: 18px; 
+    font-family: 'Be Vietnam Pro', sans-serif;
 }
-#sidebar-content {
-    padding: 15px;
+#sidebar-content { 
+    padding: 15px; 
 }
-#sidebar-content table {
-    width: 100%;
-    border-collapse: collapse;
+#sidebar-content table { 
+    width: 100%; 
+    border-collapse: collapse; 
 }
-#sidebar-content thead tr {
+#sidebar-content thead tr { 
     background-color: #f2f2f2; 
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #ddd; 
 }
-#sidebar-content thead th {
-    padding: 10px 8px;
-    text-align: left;
+#sidebar-content thead th { 
+    padding: 10px 8px; 
+    text-align: left; 
     font-weight: bold; 
 }
-#sidebar-content tbody td {
-    border-bottom: 1px solid #ddd;
-    padding: 8px 8px;
-    text-align: left;
+#sidebar-content tbody td { 
+    border-bottom: 1px solid #ddd; 
+    padding: 8px 8px; 
+    text-align: left; 
     word-break: break-all; 
-    transition: background-color 0.2s;
+    transition: background-color 0.2s; 
 }
-#sidebar-content tbody td:first-child {
+#sidebar-content tbody td:first-child { 
     width: 120px; 
 }
-#sidebar-content tbody td:hover {
-    background-color: #e6f7e6;
-    cursor: pointer;
+#sidebar-content tbody td:hover { 
+    background-color: #e6f7e6; 
+    cursor: pointer; 
 }
 
-/* --- MỚI: CSS STYLE NHÃN CỐ ĐỊNH --- */
-/* Xóa nền và viền của tooltip */
+/* CSS TỐI THIỂU cho tooltip */
 .leaflet-tooltip.xa-label {
-    background: none;
-    border: none;
-    box-shadow: none;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
 }
-/* Style cho nội dung nhãn */
-.xa-label .leaflet-tooltip-content {
-    font-weight: 900;
-    font-size: 12px; /* Cỡ chữ cố định */
-    color: #333333; /* Màu xám đậm */
-    
-    /* Thêm viền trắng (halo) để chữ nổi bật */
-    text-shadow: 1.5px 1.5px 2px #FFF, -1.5px 1.5px 2px #FFF, 1.5px -1.5px 2px #FFF, -1.5px -1.5px 2px #FFF;
-}
-
-/* --- MỚI: ẨN NHÃN KHI ZOOM QUÁ GẦN (theo yêu cầu) --- */
-/* Leaflet tự thêm class zoom vào bản đồ */
-.leaflet-zoom-15 .xa-label,
-.leaflet-zoom-16 .xa-label,
-.leaflet-zoom-17 .xa-label,
-.leaflet-zoom-18 .xa-label,
-.leaflet-zoom-19 .xa-label {
-    display: none;
-}
-
     </style>
 </head>
 <body>
@@ -126,11 +112,10 @@ html, body {
     <div id="map"></div>
 
     <script>
-// SCRIPT SẠCH 100%
-// 1. Khởi tạo bản đồ Leaflet
+// 1. Khởi tạo bản đồ
 const map = L.map('map').setView([10.7769, 106.7009], 10); 
 
-// 2. ĐỊNH NGHĨA CÁC LỚP BẢN ĐỒ NỀN
+// 2. Lớp bản đồ nền
 const osm = L.tileLayer.provider('OpenStreetMap.Mapnik');
 const esriSatellite = L.tileLayer.provider('Esri.WorldImagery').addTo(map); 
 const baseMaps = {
@@ -138,29 +123,37 @@ const baseMaps = {
     "Vệ tinh (Esri)": esriSatellite 
 };
 
-// 3. ĐỊNH NGHĨA CÁC LỚP PHỦ
+// 3. Lớp phủ
 const cartoLabels = L.tileLayer.provider('CartoDB.PositronOnlyLabels'); 
 const overlayMaps = {
     "Chỉ dẫn (Đường & Địa danh)": cartoLabels
 };
 
-// 4. THÊM BỘ CHỌN LỚP (CHỈ 1 LẦN)
+// 4. Bộ chọn lớp
 const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
 
-// 5. Lấy phần tử sidebar
+// 5. Sidebar
 const sidebar = document.getElementById('sidebar');
 const sidebarContent = document.getElementById('sidebar-content'); 
 let lastClickedLayer = null;
 
-// 6. Định nghĩa style (cho lớp Vùng Lúa)
+// 6. Style cho lớp Vùng Lúa
 const defaultStyle = {
-    color: "#ff7800", weight: 2, opacity: 0.8, fillColor: "#ff7800", fillOpacity: 0.3
+    color: "#ff7800", 
+    weight: 2, 
+    opacity: 0.8, 
+    fillColor: "#ff7800", 
+    fillOpacity: 0.3
 };
 const highlightStyle = {
-    color: "#00FFFF", weight: 4, opacity: 1, fillColor: "#00FFFF", fillOpacity: 0.5   
+    color: "#00FFFF", 
+    weight: 4, 
+    opacity: 1, 
+    fillColor: "#00FFFF", 
+    fillOpacity: 0.5   
 };
 
-// 7. Sự kiện khi click vào bản đồ
+// 7. Click vào map
 map.on('click', function() {
     if (lastClickedLayer) {
         lastClickedLayer.setStyle(defaultStyle); 
@@ -170,14 +163,89 @@ map.on('click', function() {
     sidebar.classList.remove('sidebar-visible');
 });
 
-// --- MỚI: ĐÃ XÓA TOÀN BỘ JAVASCRIPT STYLE NHÃN ---
-// (Xóa hàm updateLabelFontSize, xóa hàm setLabelStyle, xóa baselayerchange)
+// ===== BIẾN LƯU TRỮ THÔNG TIN POLYGON VÀ NHÃN =====
+let labelLayers = [];
 
+// ===== HÀM TÍNH TOÁN HIỂN THỊ NHÃN THEO ZOOM VÀ KÍCH THƯỚC POLYGON =====
+function updateLabelVisibility() {
+    const zoom = map.getZoom();
+    const bounds = map.getBounds();
+    
+    // Tính kích thước chữ theo zoom
+    let baseFontSize = 10;
+    if (zoom >= 13) {
+        baseFontSize = 15;
+    } else if (zoom >= 11) {
+        baseFontSize = 13;
+    } else if (zoom >= 9) {
+        baseFontSize = 11;
+    } else if (zoom >= 8) {
+        baseFontSize = 9;
+    } else {
+        baseFontSize = 7;
+    }
+    
+    labelLayers.forEach(item => {
+        const { layer, tooltip, polygonBounds, labelText } = item;
+        
+        // Kiểm tra polygon có trong viewport không
+        if (!bounds.intersects(polygonBounds)) {
+            tooltip.style.display = 'none';
+            return;
+        }
+        
+        // Tính kích thước polygon trên màn hình (pixels)
+        const sw = map.latLngToContainerPoint(polygonBounds.getSouthWest());
+        const ne = map.latLngToContainerPoint(polygonBounds.getNorthEast());
+        const polygonWidth = Math.abs(ne.x - sw.x);
+        const polygonHeight = Math.abs(sw.y - ne.y);
+        
+        // Ước lượng kích thước text (pixels) - trung bình 1 ký tự ~ 0.6 * fontSize
+        const textWidth = labelText.length * baseFontSize * 0.6;
+        const textHeight = baseFontSize * 1.5;
+        
+        // CHỈ HIỂN THỊ NẾU TEXT NẰM TRỌN TRONG POLYGON
+        if (textWidth < polygonWidth * 0.9 && textHeight < polygonHeight * 0.8) {
+            tooltip.style.display = 'block';
+            tooltip.style.fontSize = baseFontSize + 'px';
+        } else {
+            tooltip.style.display = 'none';
+        }
+    });
+}
 
-// 9. Đường dẫn đến file Shapefile .zip (Vùng Lúa)
+// ===== HÀM ÁP DỤNG STYLE TRỰC TIẾP VÀO TOOLTIP =====
+function applyDirectLabelStyles() {
+    const tooltips = document.querySelectorAll('.leaflet-tooltip.xa-label');
+    
+    tooltips.forEach(tooltip => {
+        tooltip.style.background = 'none';
+        tooltip.style.border = 'none';
+        tooltip.style.boxShadow = 'none';
+        tooltip.style.padding = '0';
+        tooltip.style.pointerEvents = 'none';
+        
+        // Style text với font tiếng Việt
+        tooltip.style.color = '#FFFF00'; 
+        tooltip.style.fontWeight = '900';
+        tooltip.style.fontFamily = "'Be Vietnam Pro', 'Roboto', Arial, sans-serif";
+        tooltip.style.textShadow = '-2px -2px 3px #000, 2px -2px 3px #000, -2px 2px 3px #000, 2px 2px 3px #000, 0 0 8px #000';
+        tooltip.style.webkitTextStroke = '1px #000';
+        tooltip.style.letterSpacing = '0.3px';
+        tooltip.style.whiteSpace = 'nowrap';
+    });
+    
+    // Gọi hàm cập nhật hiển thị
+    updateLabelVisibility();
+}
+
+// 8. Gọi hàm khi zoom hoặc di chuyển map
+map.on('zoomend', applyDirectLabelStyles);
+map.on('moveend', updateLabelVisibility);
+
+// 9. Đọc Shapefile Vùng Lúa
 const shpZipPath = 'data/VungLuaCLC_3857.zip';
 
-// 10. Đọc và vẽ Shapefile "Vùng Lúa" (Có click)
 fetch(shpZipPath)
     .then(response => response.arrayBuffer()) 
     .then(buffer => shp.parseZip(buffer)) 
@@ -213,7 +281,7 @@ fetch(shpZipPath)
     .catch(error => console.error("Lỗi khi đọc file SHP Vùng Lúa:", error));
 
 
-// 11. TẢI LỚP RANH XÃ (LUÔN LUÔN BẬT)
+// ===== 10. TẢI LỚP RANH XÃ VỚI LOGIC HIỂN THỊ NHÃN THÔNG MINH =====
 const ranhXaZipPath = 'data/RanhXa_3857.zip'; 
 
 fetch(ranhXaZipPath)
@@ -222,24 +290,78 @@ fetch(ranhXaZipPath)
     .then(geojson => {
         
         const ranhXaLayer = L.geoJSON(geojson, {
-            style: { color: "#C8A2C8", weight: 2, opacity: 0.8, fillOpacity: 0.0 },
+            style: { 
+                color: "#C8A2C8", 
+                weight: 2, 
+                opacity: 0.8, 
+                fillOpacity: 0.0 
+            },
             interactive: false,
             onEachFeature: function(feature, layer) {
                 if (feature.properties && feature.properties.TenXa) {
-                    layer.bindTooltip(feature.properties.TenXa, {
+                    const labelText = feature.properties.TenXa;
+                    
+                    // Tạo HTML với font tiếng Việt
+                    const labelHtml = `<span style="
+                        color: #FFFF00;
+                        font-size: 13px;
+                        font-weight: 900;
+                        font-family: 'Be Vietnam Pro', 'Roboto', Arial, sans-serif;
+                        text-shadow: -2px -2px 3px #000, 2px -2px 3px #000, -2px 2px 3px #000, 2px 2px 3px #000, 0 0 8px #000;
+                        -webkit-text-stroke: 1px #000;
+                        letter-spacing: 0.3px;
+                        white-space: nowrap;
+                    ">${labelText}</span>`;
+                    
+                    const tooltip = layer.bindTooltip(labelHtml, {
                         permanent: true,
                         direction: 'center',
-                        className: 'xa-label' // Gán class chung để CSS xử lý
-                    }).openTooltip();
+                        className: 'xa-label'
+                    });
+
+                    layer.openTooltip();
+                    
+                    // Lưu thông tin để xử lý sau
+                    labelLayers.push({
+                        layer: layer,
+                        tooltip: null, // Sẽ được gán sau
+                        polygonBounds: layer.getBounds(),
+                        labelText: labelText
+                    });
                 }
             }
         }).addTo(map);
-        // Không cần gọi hàm JS style nào ở đây nữa
+
+        // Sau khi layer được add, lấy tất cả tooltip elements
+        setTimeout(() => {
+            const tooltips = document.querySelectorAll('.leaflet-tooltip.xa-label');
+            tooltips.forEach((tooltipEl, index) => {
+                if (labelLayers[index]) {
+                    labelLayers[index].tooltip = tooltipEl;
+                }
+            });
+            
+            applyDirectLabelStyles();
+        }, 500);
+
+        ranhXaLayer.on('add', function() {
+            setTimeout(() => {
+                applyDirectLabelStyles();
+            }, 200);
+        });
+
     })
     .catch(error => {
         console.error("Lỗi khi đọc file SHP Ranh Xã:", error);
-        alert("Không thể tải file RanhXa_3857.zip. Hãy kiểm tra tên file.");
+        alert("Không thể tải file RanhXa_3857.zip. Kiểm tra đường dẫn file.");
     });
+
+// Áp dụng style khi map load xong
+map.whenReady(function() {
+    setTimeout(() => {
+        applyDirectLabelStyles();
+    }, 1000);
+});
 
     </script>
 </body>
