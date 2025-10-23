@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGIS - Nhãn Xã Tối Ưu Tiếng Việt</title>
+    <title>Lúa CLC Đồng Tháp</title>
     
     <!-- Font tiếng Việt từ Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -77,23 +77,15 @@ html, body {
     font-weight: bold; 
 }
 
-/* QUAN TRỌNG: CSS tối ưu cho ô dữ liệu - KHÔNG CẮT TỪ GIỮA CHỪNG */
+/* CSS tối ưu cho ô dữ liệu - KHÔNG CẮT TỪ GIỮA CHỪNG */
 #sidebar-content tbody td { 
     border-bottom: 1px solid #ddd; 
     padding: 8px 8px; 
     text-align: left; 
-    
-    /* XÓA word-break: break-all - đây là nguyên nhân cắt từ */
-    /* THAY BẰNG: overflow-wrap để giữ nguyên từ */
     overflow-wrap: break-word; 
     word-break: normal;
-    
-    /* Chỉ xuống dòng ở khoảng trắng, giữ nguyên từ utuh */
     white-space: normal;
-    
-    /* Cho phép xuống dòng nhưng ưu tiên giữ từ nguyên vẹn */
     hyphens: none;
-    
     transition: background-color 0.2s; 
 }
 
@@ -107,12 +99,13 @@ html, body {
     cursor: pointer; 
 }
 
-/* CSS TỐI THIỂU cho tooltip */
+/* CSS cho tooltip */
 .leaflet-tooltip.xa-label {
     background: none !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
+    transition: font-size 0.2s ease-in-out !important;
 }
     </style>
 </head>
@@ -182,51 +175,97 @@ map.on('click', function() {
 // BIẾN LƯU TRỮ THÔNG TIN POLYGON VÀ NHÃN
 let labelLayers = [];
 
-// HÀM TÍNH TOÁN HIỂN THỊ NHÃN THEO ZOOM VÀ KÍCH THƯỚC POLYGON
+// ===== HÀM MỚI: TÍNH FONT SIZE ĐỘNG DỰA TRÊN ZOOM VÀ KÍCH THƯỚC POLYGON =====
+function calculateAdaptiveFontSize(polygonBounds, zoom, labelText) {
+    // Tính kích thước polygon trên màn hình (pixels)
+    const sw = map.latLngToContainerPoint(polygonBounds.getSouthWest());
+    const ne = map.latLngToContainerPoint(polygonBounds.getNorthEast());
+    const polygonWidth = Math.abs(ne.x - sw.x);
+    const polygonHeight = Math.abs(sw.y - ne.y);
+    
+    // Font size cơ bản theo zoom - TỰ ĐỘNG TỐ LÊN KHI ZOOM VÀO
+    let baseFontSize;
+    if (zoom >= 14) {
+        baseFontSize = 18;  // Rất lớn khi zoom gần
+    } else if (zoom >= 13) {
+        baseFontSize = 16;
+    } else if (zoom >= 12) {
+        baseFontSize = 14;
+    } else if (zoom >= 11) {
+        baseFontSize = 12;
+    } else if (zoom >= 10) {
+        baseFontSize = 10;
+    } else if (zoom >= 9) {
+        baseFontSize = 9;
+    } else if (zoom >= 8) {
+        baseFontSize = 8;
+    } else {
+        baseFontSize = 7;   // Nhỏ nhất khi zoom xa
+    }
+    
+    // Tính kích thước tối đa của text có thể hiển thị trong polygon
+    const maxTextWidth = polygonWidth * 0.85;  // 85% chiều rộng polygon
+    const maxTextHeight = polygonHeight * 0.7; // 70% chiều cao polygon
+    
+    // Ước tính kích thước text với font size hiện tại
+    const estimatedTextWidth = labelText.length * baseFontSize * 0.6;
+    const estimatedTextHeight = baseFontSize * 1.5;
+    
+    // Điều chỉnh font size nếu text quá lớn cho polygon
+    let adjustedFontSize = baseFontSize;
+    
+    if (estimatedTextWidth > maxTextWidth) {
+        adjustedFontSize = Math.floor(maxTextWidth / (labelText.length * 0.6));
+    }
+    
+    if (adjustedFontSize * 1.5 > maxTextHeight) {
+        adjustedFontSize = Math.min(adjustedFontSize, Math.floor(maxTextHeight / 1.5));
+    }
+    
+    // Đảm bảo font size tối thiểu là 6px để vẫn đọc được
+    adjustedFontSize = Math.max(6, adjustedFontSize);
+    
+    return adjustedFontSize;
+}
+
+// ===== HÀM CẬP NHẬT HIỂN THỊ NHÃN THÔNG MINH =====
 function updateLabelVisibility() {
     const zoom = map.getZoom();
     const bounds = map.getBounds();
     
-    // Tính kích thước chữ theo zoom
-    let baseFontSize = 10;
-    if (zoom >= 13) {
-        baseFontSize = 15;
-    } else if (zoom >= 11) {
-        baseFontSize = 13;
-    } else if (zoom >= 9) {
-        baseFontSize = 11;
-    } else if (zoom >= 8) {
-        baseFontSize = 9;
-    } else {
-        baseFontSize = 7;
-    }
-    
     labelLayers.forEach(item => {
         const { layer, tooltip, polygonBounds, labelText } = item;
         
+        // Kiểm tra polygon có trong viewport không
         if (!bounds.intersects(polygonBounds)) {
             tooltip.style.display = 'none';
             return;
         }
         
+        // Tính font size thích hợp
+        const fontSize = calculateAdaptiveFontSize(polygonBounds, zoom, labelText);
+        
+        // Kiểm tra text có vừa trong polygon không
         const sw = map.latLngToContainerPoint(polygonBounds.getSouthWest());
         const ne = map.latLngToContainerPoint(polygonBounds.getNorthEast());
         const polygonWidth = Math.abs(ne.x - sw.x);
         const polygonHeight = Math.abs(sw.y - ne.y);
         
-        const textWidth = labelText.length * baseFontSize * 0.6;
-        const textHeight = baseFontSize * 1.5;
+        const textWidth = labelText.length * fontSize * 0.6;
+        const textHeight = fontSize * 1.5;
         
-        if (textWidth < polygonWidth * 0.9 && textHeight < polygonHeight * 0.8) {
+        // LUÔN HIỂN THỊ nếu text vừa vặn trong polygon
+        if (textWidth <= polygonWidth * 0.9 && textHeight <= polygonHeight * 0.8) {
             tooltip.style.display = 'block';
-            tooltip.style.fontSize = baseFontSize + 'px';
+            tooltip.style.fontSize = fontSize + 'px';
         } else {
+            // Ẩn nếu không vừa
             tooltip.style.display = 'none';
         }
     });
 }
 
-// HÀM ÁP DỤNG STYLE TRỰC TIẾP VÀO TOOLTIP
+// ===== HÀM ÁP DỤNG STYLE TRỰC TIẾP VÀO TOOLTIP =====
 function applyDirectLabelStyles() {
     const tooltips = document.querySelectorAll('.leaflet-tooltip.xa-label');
     
@@ -246,6 +285,7 @@ function applyDirectLabelStyles() {
         tooltip.style.whiteSpace = 'nowrap';
     });
     
+    // Gọi hàm cập nhật hiển thị
     updateLabelVisibility();
 }
 
@@ -291,7 +331,7 @@ fetch(shpZipPath)
     .catch(error => console.error("Lỗi khi đọc file SHP Vùng Lúa:", error));
 
 
-// 10. TẢI LỚP RANH XÃ VỚI LOGIC HIỂN THỊ NHÃN THÔNG MINH
+// ===== 10. TẢI LỚP RANH XÃ VỚI LOGIC ZOOM THÔNG MINH =====
 const ranhXaZipPath = 'data/RanhXa_3857.zip'; 
 
 fetch(ranhXaZipPath)
@@ -313,7 +353,7 @@ fetch(ranhXaZipPath)
                     
                     const labelHtml = `<span style="
                         color: #FFFF00;
-                        font-size: 13px;
+                        font-size: 10px;
                         font-weight: 900;
                         font-family: 'Be Vietnam Pro', 'Roboto', Arial, sans-serif;
                         text-shadow: -2px -2px 3px #000, 2px -2px 3px #000, -2px 2px 3px #000, 2px 2px 3px #000, 0 0 8px #000;
